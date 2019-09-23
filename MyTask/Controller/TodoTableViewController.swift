@@ -12,9 +12,11 @@ class TodoTableViewController: UITableViewController {
     
     //MARK: - Properties
     var items = [Item]()
+    var filePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("items.plist")
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        loadItems()
     }
 
     // MARK: - Table view data source
@@ -32,6 +34,7 @@ class TodoTableViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         items[indexPath.row].done.toggle()
+        saveItems()
         tableView.reloadData()
     }
     //MARK: - Custom actions
@@ -47,9 +50,30 @@ class TodoTableViewController: UITableViewController {
             item.title = textField.text!
             item.done = false
             self.items.append(item)
+            self.saveItems()
             self.tableView.reloadData()
         }))
         present(alert, animated: true, completion: nil)
+    }
+    func saveItems() {
+        let encoder = PropertyListEncoder()
+        let data = try? encoder.encode(self.items)
+        do {
+           try data?.write(to: filePath!)
+        } catch {
+            print("error saving items \(error)")
+        }
+        tableView.reloadData()
+    }
+    func loadItems() {
+        let decoder = PropertyListDecoder()
+        do {
+        let data = try Data(contentsOf: filePath!)
+        self.items = try decoder.decode([Item].self, from: data)
+        } catch {
+            print("error loading items \(error)")
+        }
+        tableView.reloadData()
     }
     
 }
