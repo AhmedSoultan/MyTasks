@@ -7,13 +7,13 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoTableViewController: UITableViewController {
-    
     //MARK: - Properties
     var items = [Item]()
-    var filePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("items.plist")
-
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         loadItems()
@@ -37,6 +37,15 @@ class TodoTableViewController: UITableViewController {
         saveItems()
         tableView.reloadData()
     }
+    override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let action = UIContextualAction(style: UIContextualAction.Style.normal, title: "Delete") { (action, view, (Bool) -> Void) in
+            self.context.delete(self.items[indexPath.row])
+            self.items.remove(at: indexPath.row)
+            self.saveItems()
+        }
+        action.backgroundColor = .red
+        return UISwipeActionsConfiguration(actions: [action])
+    }
     //MARK: - Custom actions
     @IBAction func addButtonAction(_ sender: Any) {
         var textField = UITextField()
@@ -46,34 +55,49 @@ class TodoTableViewController: UITableViewController {
             textField = addTextField
         }
         alert.addAction(UIAlertAction(title: "Add", style: UIAlertAction.Style.default, handler: { (action) in
-            let item = Item()
+            let item = Item(context: self.context)
             item.title = textField.text!
             item.done = false
             self.items.append(item)
             self.saveItems()
-            self.tableView.reloadData()
         }))
+        alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertAction.Style.cancel, handler: nil))
         present(alert, animated: true, completion: nil)
     }
+    
     func saveItems() {
-        let encoder = PropertyListEncoder()
-        let data = try? encoder.encode(self.items)
         do {
-           try data?.write(to: filePath!)
+           try context.save()
         } catch {
             print("error saving items \(error)")
         }
         tableView.reloadData()
     }
-    func loadItems() {
-        let decoder = PropertyListDecoder()
+    func loadItems(with request:NSFetchRequest<Item> = Item.fetchRequest()) {
         do {
-        let data = try Data(contentsOf: filePath!)
-        self.items = try decoder.decode([Item].self, from: data)
+            items = try context.fetch(request)
+            print(self.items)
         } catch {
             print("error loading items \(error)")
         }
         tableView.reloadData()
     }
     
+}
+extension TodoTableViewController: UISearchBarDelegate {
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.showsCancelButton = true
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+       // request.predicate = NSPredicate(format: "title CONTAINS %@", searchBar.text!)
+        loadItems(with: request)
+        tableView.reloadData()
+    }
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.text = ""
+        searchBar.showsCancelButton = false
+        searchBar.resignFirstResponder()
+        loadItems()
+        tableView.reloadData()
+    }
 }
