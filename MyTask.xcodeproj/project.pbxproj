@@ -70,8 +70,8 @@
 			isa = PBXGroup;
 			children = (
 				BCF04255233924E90096C341 /* AppDelegate.swift */,
-				BCF0426C233927B30096C341 /* TodoTableViewController.swift */,
 				BCA5EC8A233B111400639AE6 /* CatogeryTableViewController.swift */,
+				BCF0426C233927B30096C341 /* TodoTableViewController.swift */,
 			);
 			path = Controller;
 			sourceTree = "<group>";

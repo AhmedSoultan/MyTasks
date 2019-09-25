@@ -13,6 +13,7 @@ class TodoTableViewController: UITableViewController {
     //MARK: - Properties
     var items = [Item]()
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    var selectedCategory: Category?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -58,6 +59,7 @@ class TodoTableViewController: UITableViewController {
             let item = Item(context: self.context)
             item.title = textField.text!
             item.done = false
+            item.parentCategory = self.selectedCategory
             self.items.append(item)
             self.saveItems()
         }))
@@ -73,10 +75,15 @@ class TodoTableViewController: UITableViewController {
         }
         tableView.reloadData()
     }
-    func loadItems(with request:NSFetchRequest<Item> = Item.fetchRequest()) {
+    func loadItems(with request:NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil) {
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        if let predicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, predicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
         do {
             items = try context.fetch(request)
-            print(self.items)
         } catch {
             print("error loading items \(error)")
         }
@@ -86,18 +93,25 @@ class TodoTableViewController: UITableViewController {
 }
 extension TodoTableViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        searchBar.showsCancelButton = true
+        searchBar.showsCancelButton.toggle()
         let request: NSFetchRequest<Item> = Item.fetchRequest()
-        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
-       // request.predicate = NSPredicate(format: "title CONTAINS %@", searchBar.text!)
-        loadItems(with: request)
-        tableView.reloadData()
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        loadItems(with: request, predicate: predicate)
     }
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
-        searchBar.text = ""
-        searchBar.showsCancelButton = false
+        searchBar.text = nil
+        searchBar.showsCancelButton.toggle()
         searchBar.resignFirstResponder()
         loadItems()
-        tableView.reloadData()
+    }
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            searchBar.showsCancelButton.toggle()
+            loadItems()
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+        }
     }
 }
