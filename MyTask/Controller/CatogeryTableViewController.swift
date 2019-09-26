@@ -7,13 +7,13 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
 
 class CatogeryTableViewController: UITableViewController {
     
     //MARK: - Properties
-    var categories = [Category]()
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    var categories: Results<Category>?
+    let realm = try! Realm()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -23,12 +23,12 @@ class CatogeryTableViewController: UITableViewController {
     // MARK: - Table view data source
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        return categories.count
+        return categories?.count ?? 1
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "categoryCell", for: indexPath)
-        cell.textLabel?.text = categories[indexPath.row].name
+        cell.textLabel?.text = categories?[indexPath.row].name ?? "No categories added yet"
         return cell
     }
     
@@ -39,10 +39,18 @@ class CatogeryTableViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let action = UIContextualAction(style: UIContextualAction.Style.normal, title: "delete") { (action, view, completed) in
-            self.context.delete(self.categories[indexPath.row])
-            self.categories.remove(at: indexPath.row)
-            self.saveCategories()
-        }
+            if let category = self.categories?[indexPath.row] {
+                
+                do {
+                    try self.realm.write {
+                    self.realm.delete(category)
+                    }
+                } catch {
+                    print("error deletig category \(error)")
+                }
+            }
+            tableView.reloadData()
+    }
         action.backgroundColor = .red
         return UISwipeActionsConfiguration(actions: [action])
     }
@@ -50,7 +58,7 @@ class CatogeryTableViewController: UITableViewController {
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let todoVC = segue.destination as! TodoTableViewController
         let indexPath = tableView.indexPathForSelectedRow!
-        todoVC.selectedCategory = categories[indexPath.row]
+        todoVC.selectedCategory = categories?[indexPath.row]
     }
     
     //MARK: - Custom actions
@@ -62,41 +70,39 @@ class CatogeryTableViewController: UITableViewController {
                    textField = addTextField
                }
                alert.addAction(UIAlertAction(title: "Add", style: UIAlertAction.Style.default, handler: { (action) in
-                let category = Category(context: self.context)
-                category.name = textField.text!
-                self.categories.append(category)
-                self.saveCategories()
+                let newCategory = Category()
+                newCategory.name = textField.text!
+                self.save(category: newCategory)
                }))
                alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertAction.Style.cancel, handler: nil))
                present(alert, animated: true, completion: nil)
     }
     
-    func saveCategories() {
+    func save(category: Category) {
         do {
-            try context.save()
+            try realm.write {
+                realm.add(category)
+            }
         } catch {
             print("error saving categories \(error)")
         }
         tableView.reloadData()
     }
     
-    func loadCategories(with request: NSFetchRequest<Category> = Category.fetchRequest()) {
-        do {
-            categories = try context.fetch(request)
-        } catch {
-            print("error loadind categories \(error)")
-        }
+    func loadCategories() {
+         categories = realm.objects(Category.self)
         tableView.reloadData()
     }
 }
 extension CatogeryTableViewController: UISearchBarDelegate {
-    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
         searchBar.showsCancelButton.toggle()
-        let request: NSFetchRequest<Category> = Category.fetchRequest()
-        request.predicate = NSPredicate(format: "name CONTAINS[cd] %@", searchBar.text!)
-        loadCategories(with: request)
     }
-    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        categories = categories?.filter("name CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "name", ascending: true)
+        tableView.reloadData()
+    }
+
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         searchBar.showsCancelButton.toggle()
         searchBar.text = nil
@@ -113,5 +119,5 @@ extension CatogeryTableViewController: UISearchBarDelegate {
             }
         }
     }
-    
+
 }

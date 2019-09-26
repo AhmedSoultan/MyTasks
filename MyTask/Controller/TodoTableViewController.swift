@@ -7,12 +7,14 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
 
 class TodoTableViewController: UITableViewController {
+    
     //MARK: - Properties
-    var items = [Item]()
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    
+    var items: Results<Item>?
+    let realm = try! Realm()
     var selectedCategory: Category?
     
     override func viewDidLoad() {
@@ -23,31 +25,50 @@ class TodoTableViewController: UITableViewController {
     // MARK: - Table view data source
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of rows
-        return items.count
+        return items?.count ?? 1
     }
+    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "todoCell", for: indexPath)
-        cell.textLabel?.text = items[indexPath.row].title
-        cell.accessoryType = items[indexPath.row].done ? .checkmark : .none
+        if let item = items?[indexPath.row] {
+            cell.textLabel?.text = item.title
+            cell.accessoryType = item.done ? .checkmark : .none
+        }
+     
         return cell
     }
+    
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        items[indexPath.row].done.toggle()
-        saveItems()
-        tableView.reloadData()
+        if let item = items?[indexPath.row] {
+            do {
+                try self.realm.write {
+                     item.done.toggle()
+                }
+            } catch {
+                print("error updating itme \(error)")
+            }
+            tableView.reloadData()
+        }
     }
+    
     override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let action = UIContextualAction(style: UIContextualAction.Style.normal, title: "Delete") { (action, view, (Bool) -> Void) in
-            self.context.delete(self.items[indexPath.row])
-            self.items.remove(at: indexPath.row)
-            self.saveItems()
+            if let item = self.items?[indexPath.row] {
+                do {
+                    try self.realm.write {
+                        self.realm.delete(item)
+                    }
+                } catch {
+                    print("error deleting item \(error)")
+                }
+                self.tableView.reloadData()
+            }
         }
-        action.backgroundColor = .red
-        return UISwipeActionsConfiguration(actions: [action])
-    }
+       action.backgroundColor = .red
+       return UISwipeActionsConfiguration(actions: [action])
+   }
     //MARK: - Custom actions
+    
     @IBAction func addButtonAction(_ sender: Any) {
         var textField = UITextField()
         let alert = UIAlertController(title: "Add new item", message: nil, preferredStyle: UIAlertController.Style.alert)
@@ -56,55 +77,48 @@ class TodoTableViewController: UITableViewController {
             textField = addTextField
         }
         alert.addAction(UIAlertAction(title: "Add", style: UIAlertAction.Style.default, handler: { (action) in
-            let item = Item(context: self.context)
-            item.title = textField.text!
-            item.done = false
-            item.parentCategory = self.selectedCategory
-            self.items.append(item)
-            self.saveItems()
+            let item = Item()
+            if let currentCategory = self.selectedCategory {
+                do {
+                    item.title = textField.text!
+                    item.date = Date()
+                    try self.realm.write {
+                        currentCategory.items.append(item)
+                    }
+                } catch {
+                   print("error saving items \(error)")
+                }
+                self.tableView.reloadData()
+            }
         }))
         alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertAction.Style.cancel, handler: nil))
         present(alert, animated: true, completion: nil)
     }
     
-    func saveItems() {
-        do {
-           try context.save()
-        } catch {
-            print("error saving items \(error)")
-        }
-        tableView.reloadData()
-    }
-    func loadItems(with request:NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil) {
-        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
-        if let predicate = predicate {
-            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, predicate])
-        } else {
-            request.predicate = categoryPredicate
-        }
-        do {
-            items = try context.fetch(request)
-        } catch {
-            print("error loading items \(error)")
-        }
+    func loadItems() {
+        items = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
         tableView.reloadData()
     }
     
 }
 extension TodoTableViewController: UISearchBarDelegate {
-    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
         searchBar.showsCancelButton.toggle()
-        let request: NSFetchRequest<Item> = Item.fetchRequest()
-        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
-        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-        loadItems(with: request, predicate: predicate)
     }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        items = items?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "date", ascending: true)
+       searchBar.showsCancelButton.toggle()
+        tableView.reloadData()
+    }
+    
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         searchBar.text = nil
         searchBar.showsCancelButton.toggle()
         searchBar.resignFirstResponder()
         loadItems()
     }
+    
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         if searchBar.text?.count == 0 {
             searchBar.showsCancelButton.toggle()
