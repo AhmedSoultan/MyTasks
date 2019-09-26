@@ -10,7 +10,6 @@ import UIKit
 import RealmSwift
 
 class TodoTableViewController: UITableViewController {
-    
     //MARK: - Properties
     
     var items: Results<Item>?
