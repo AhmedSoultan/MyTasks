@@ -10,6 +10,7 @@
 		76992207B488FFDFBA206456 /* Pods_MyTask.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E93BD5B559A6A3D7CA2BB1A6 /* Pods_MyTask.framework */; };
 		BC6B5309233CD89E0007F3F5 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC6B5308233CD89E0007F3F5 /* Item.swift */; };
 		BC6B530B233CD8B20007F3F5 /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC6B530A233CD8B20007F3F5 /* Category.swift */; };
+		BC82909D233D98230008F82E /* SwipeCellTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC82909C233D98230008F82E /* SwipeCellTableViewController.swift */; };
 		BCA5EC8B233B111400639AE6 /* CatogeryTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCA5EC8A233B111400639AE6 /* CatogeryTableViewController.swift */; };
 		BCF04256233924E90096C341 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCF04255233924E90096C341 /* AppDelegate.swift */; };
 		BCF0425B233924E90096C341 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BCF04259233924E90096C341 /* Main.storyboard */; };
@@ -22,6 +23,7 @@
 		16A7C9B5F51496B8C44B83D4 /* Pods-MyTask.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MyTask.debug.xcconfig"; path = "Target Support Files/Pods-MyTask/Pods-MyTask.debug.xcconfig"; sourceTree = "<group>"; };
 		BC6B5308233CD89E0007F3F5 /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
 		BC6B530A233CD8B20007F3F5 /* Category.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Category.swift; sourceTree = "<group>"; };
+		BC82909C233D98230008F82E /* SwipeCellTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeCellTableViewController.swift; sourceTree = "<group>"; };
 		BCA5EC8A233B111400639AE6 /* CatogeryTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatogeryTableViewController.swift; sourceTree = "<group>"; };
 		BCF04252233924E90096C341 /* MyTask.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyTask.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BCF04255233924E90096C341 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -87,6 +89,7 @@
 			isa = PBXGroup;
 			children = (
 				BCF04255233924E90096C341 /* AppDelegate.swift */,
+				BC82909C233D98230008F82E /* SwipeCellTableViewController.swift */,
 				BCA5EC8A233B111400639AE6 /* CatogeryTableViewController.swift */,
 				BCF0426C233927B30096C341 /* TodoTableViewController.swift */,
 			);
@@ -240,6 +243,7 @@
 				BCF04256233924E90096C341 /* AppDelegate.swift in Sources */,
 				BCF0426D233927B30096C341 /* TodoTableViewController.swift in Sources */,
 				BCA5EC8B233B111400639AE6 /* CatogeryTableViewController.swift in Sources */,
+				BC82909D233D98230008F82E /* SwipeCellTableViewController.swift in Sources */,
 				BC6B530B233CD8B20007F3F5 /* Category.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
