@@ -8,6 +8,7 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
 class CatogeryTableViewController: SwipeCellTableViewController {
 
@@ -18,6 +19,8 @@ let realm = try! Realm()
 override func viewDidLoad() {
     super.viewDidLoad()
     loadCategories()
+    navigationController?.navigationBar.barTintColor = UIColor.flatRed()
+    
 
 }
 
@@ -27,9 +30,11 @@ override func tableView(_ tableView: UITableView, numberOfRowsInSection section:
 }
 
 override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-//        let cell = tableView.dequeueReusableCell(withIdentifier: "categoryCell", for: indexPath)
     let cell = super.tableView(tableView, cellForRowAt: indexPath)
     cell.textLabel?.text = categories?[indexPath.row].name ?? "No categories added yet"
+    let colour = UIColor.init(hexString: categories?[indexPath.row].colour)
+    cell.backgroundColor = UIColor.init(hexString: categories?[indexPath.row].colour ?? "FFFFFF")
+    cell.textLabel?.textColor = UIColor(contrastingBlackOrWhiteColorOn: colour, isFlat: true)
     return cell
 }
 
@@ -66,6 +71,7 @@ override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
            alert.addAction(UIAlertAction(title: "Add", style: UIAlertAction.Style.default, handler: { (action) in
             let newCategory = Category()
             newCategory.name = textField.text!
+            newCategory.colour = UIColor.randomFlat()?.hexValue()
             self.save(category: newCategory)
            }))
            alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertAction.Style.cancel, handler: nil))
@@ -96,7 +102,6 @@ func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
     categories = categories?.filter("name CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "name", ascending: true)
     tableView.reloadData()
 }
-
 func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
     searchBar.showsCancelButton.toggle()
     searchBar.text = nil

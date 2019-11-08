@@ -10,16 +10,33 @@ import UIKit
 import RealmSwift
 
 class TodoTableViewController: SwipeCellTableViewController {
+    
+@IBOutlet weak var searchBar: UISearchBar!
+    
 //MARK: - Properties
 
 var items: Results<Item>?
 let realm = try! Realm()
 var selectedCategory: Category?
 
+//MARK; - View life cycle
+    
 override func viewDidLoad() {
     super.viewDidLoad()
     loadItems()
 }
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        updateColors()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        guard let originalColor = UIColor.flatRed() else {fatalError()}
+        navigationController?.navigationBar.barTintColor = originalColor
+        navigationController?.navigationBar.tintColor = UIColor.flatBlack()
+        navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : UIColor.flatBlack()]
+    }
 
 // MARK: - Table view data source
 
@@ -29,9 +46,14 @@ override func tableView(_ tableView: UITableView, numberOfRowsInSection section:
 
 override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell = super.tableView(tableView, cellForRowAt: indexPath)
-    if let item = items?[indexPath.row] {
+    if let items = items, let currentCategory = selectedCategory {
+        let item = items[indexPath.row]
+        let colour = UIColor.init(hexString: currentCategory.colour!)
         cell.textLabel?.text = item.title
         cell.accessoryType = item.done ? .checkmark : .none
+        cell.backgroundColor = colour?.lighten(byPercentage: CGFloat(indexPath.row) / CGFloat(items.count))
+        cell.textLabel?.textColor = UIColor(contrastingBlackOrWhiteColorOn: colour!, isFlat: true)
+        //cell.backgroundColor = colour!.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(items.count))
     }
  
     return cell
@@ -93,7 +115,17 @@ func loadItems() {
     items = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
     tableView.reloadData()
 }
-
+func updateColors() {
+    guard let navBar = navigationController?.navigationBar,
+          let currentCategory = selectedCategory,
+        let colour = UIColor(contrastingBlackOrWhiteColorOn: UIColor.init(hexString: currentCategory.colour), isFlat: true) else {fatalError("error updating colours")}
+    navBar.barTintColor = UIColor.init(hexString: currentCategory.colour)
+    navBar.tintColor = colour
+    searchBar.barTintColor = UIColor.init(hexString: currentCategory.colour)
+    navBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : colour]
+    title = currentCategory.name
+    
+}
 }
 extension TodoTableViewController: UISearchBarDelegate {
 func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {

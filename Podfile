@@ -9,5 +9,5 @@ target 'MyTask' do
   pod 'Realm'
   pod 'RealmSwift'
   pod 'SwipeCellKit'
-  pod 'ChameleonFramework/Swift'
+  pod 'ChameleonFramework'
 end
